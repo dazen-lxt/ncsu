@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.ncsu.imagc.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/home_fragment" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.ncsu.imagc.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@layout/settings_fragment" />
+
+    <fragment
+        android:id="@+id/nav_login"
+        android:name="com.ncsu.imagc.ui.login.LoginFragment"
+        android:label="@string/menu_login"
+        tools:layout="@layout/login_fragment" >
+        <action
+            android:id="@+id/action_nav_login_to_nav_camera"
+            app:destination="@id/nav_settings" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_camera"
+        android:name="com.ncsu.imagc.ui.camera.CameraFragment"
+        android:label="@string/menu_camera"
+        tools:layout="@layout/fragment_camera"/>
+
+    <fragment
+        android:id="@+id/nav_historic"
+        android:name="com.ncsu.imagc.ui.historic.HistoricFragment"
+        android:label="@string/menu_historic"
+        tools:layout="@layout/fragment_historic"/>
+</navigation>

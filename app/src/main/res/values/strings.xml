@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">ImAgC</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_login">Login</string>
+    <string name="menu_logout">Logout</string>
+    <string name="menu_camera">Camera</string>
+    <string name="menu_historic">Historic</string>
+    <string name="menu_settings">Settings</string>
+    <string name="signin_title">Signing in with your Google account will allow you to sync your information on GoogleDrive</string>
+    <string name="home_title">Capture images. You can manage focus with volume up button</string>
+    <string name="start">Start</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
