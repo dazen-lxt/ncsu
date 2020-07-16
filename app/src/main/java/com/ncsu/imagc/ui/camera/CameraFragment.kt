@@ -11,6 +11,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
+import com.ncsu.imagc.MainActivity
 import com.ncsu.imagc.R
 import kotlinx.android.synthetic.main.fragment_camera.*
 import java.io.File
@@ -20,6 +21,7 @@ import kotlin.math.abs
 class CameraFragment : Fragment() {
 
 
+    private var savedUri: Uri?= null
     private lateinit var camera: Camera
     private lateinit var preview: Preview
     private lateinit var imageCapture: ImageCapture
@@ -57,7 +59,7 @@ class CameraFragment : Fragment() {
                 view.y += abs(motionEvent.x - startX) / 10
             }
             if (motionEvent.action == MotionEvent.ACTION_UP) {
-                if(abs(totalMovement) > 300)
+                if(abs(totalMovement) > 300) {
                     view.animate().alpha(0f).withEndAction {
                         cardViewContainer.visibility = View.GONE
                         view.translationX = 0f
@@ -65,6 +67,8 @@ class CameraFragment : Fragment() {
                         view.rotation = 0f
                         view.alpha = 1f
                     }
+                    (activity as? MainActivity)?.uploadImage(savedUri!!)
+                }
                 else
                     view.animate().translationX(0f).translationY(0f).rotation(0f)
             }
@@ -89,7 +93,7 @@ class CameraFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
+                    savedUri = Uri.fromFile(photoFile)
                     photoImageView.setImageURI(savedUri)
                     cardViewContainer.visibility = View.VISIBLE
                 }

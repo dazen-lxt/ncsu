@@ -36,7 +36,6 @@
         app:layout_constraintTop_toTopOf="@+id/takePhotoButton" />
     <RelativeLayout
         android:id="@+id/cardViewContainer"
-        android:visibility="gone"
         android:background="@color/translucentDark"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -48,15 +47,16 @@
             android:layout_margin="30dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <FrameLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <ImageView
                     android:adjustViewBounds="true"
                     android:id="@+id/photoImageView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </FrameLayout>
+                    android:layout_height="200dp" />
+
+            </RelativeLayout>
         </androidx.cardview.widget.CardView>
     </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

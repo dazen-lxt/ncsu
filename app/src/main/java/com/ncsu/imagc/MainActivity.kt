@@ -1,7 +1,9 @@
 package com.ncsu.imagc
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -20,22 +22,28 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Task
 import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.google.api.client.http.FileContent
+import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
-import com.ncsu.imagc.helpers.DriveServiceHelper
+import com.google.api.services.drive.model.File
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.doAsync
 import java.util.*
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuItemClickListener {
 
+    private lateinit var googleDriveService: Drive
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var mGoogleSignInClient: GoogleSignInClient
-
+    private var account: GoogleSignInAccount? = null
+    private var folderId: String = ""
     companion object {
         const val RC_SIGN_IN = 123
     }
@@ -60,13 +68,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         val gso =
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestScopes(
+                    Scope(DriveScopes.DRIVE))
                 .build()
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        setupMenu(account)
+        account = GoogleSignIn.getLastSignedInAccount(this)
+        setupMenu()
+        setupDrive()
     }
 
-    private fun setupMenu(account: GoogleSignInAccount?) {
+    private fun setupMenu() {
         val navigationMenu: Menu = navView.menu
         val isLogged = account != null
         navigationMenu.findItem(R.id.nav_logout).isVisible = isLogged
@@ -105,7 +116,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
 
     private fun googleSignOut() {
         mGoogleSignInClient.signOut()
-        setupMenu(null)
+        account = null
+        setupMenu()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -115,27 +127,78 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                 GoogleSignIn.getSignedInAccountFromIntent(data)
             handleSignInResult(task)
         }
+        else {
+            setupDrive()
+        }
     }
 
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
-            val account =
+            account =
                 completedTask.getResult(ApiException::class.java)
-            setupMenu(account)
-            val credential = GoogleAccountCredential.usingOAuth2(
-                this, Collections.singleton(DriveScopes.DRIVE_FILE)
-            )
-            credential.selectedAccount = account!!.account
-            val googleDriveService = Drive.Builder(
-                AndroidHttp.newCompatibleTransport(),
-                GsonFactory(),
-                credential
-            )
-                .setApplicationName("AppName")
-                .build()
-            var mDriveServiceHelper = DriveServiceHelper(googleDriveService)
+
         } catch (e: ApiException) {
-            setupMenu(null)
+            account = null
+        }
+        setupMenu()
+        setupDrive()
+    }
+
+    fun setupDrive() {
+        if (account == null)
+            return
+        val credential = GoogleAccountCredential.usingOAuth2(
+            this, listOf(DriveScopes.DRIVE_FILE)
+        )
+        credential.selectedAccount = account!!.account
+        googleDriveService = Drive.Builder(
+            AndroidHttp.newCompatibleTransport(),
+            JacksonFactory.getDefaultInstance(),
+            credential)
+            .setApplicationName(getString(R.string.app_name))
+            .build()
+        doAsync {
+            try {
+                var folders = googleDriveService.files().list().apply {
+                    q = "name='ImAgC' and mimeType='application/vnd.google-apps.folder'"
+                    spaces = "drive"
+                }.execute()
+                if (folders.files.size == 0) {
+                    val fileMetadata = File()
+                    fileMetadata.setName("ImAgC")
+                    fileMetadata.setMimeType("application/vnd.google-apps.folder")
+
+                        var folder = googleDriveService.files().create(fileMetadata).apply {
+                            fields = "id"
+                        }.execute()
+                        folderId = folder.id
+
+                } else {
+                    folderId = folders.files[0].id
+                }
+            } catch (e: UserRecoverableAuthIOException) {
+                startActivityForResult(e.intent, 20002);
+            } catch (e: Exception) {
+                Log.v("LXT", "KLXR")
+            }
+        }
+    }
+
+    fun uploadImage(imageUri: Uri) {
+        val fileMetadata =
+            File()
+        fileMetadata.name = "${System.currentTimeMillis()}.jpg"
+        fileMetadata.setParents(Collections.singletonList(folderId));
+        var file = java.io.File(imageUri.path)
+        val mediaContent = FileContent("image/jpeg", file)
+        doAsync {
+            try {
+                googleDriveService.files().create(fileMetadata, mediaContent).apply {
+                    fields = "id"
+                }.execute()
+            } catch (e: Exception) {
+                Log.v("LXT", "KLXR")
+            }
         }
     }
 
