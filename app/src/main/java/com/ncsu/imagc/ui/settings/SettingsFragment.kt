@@ -1,12 +1,20 @@
 package com.ncsu.imagc.ui.settings
 
-import androidx.lifecycle.ViewModelProviders
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.ncsu.imagc.MainActivity
 import com.ncsu.imagc.R
+import com.ncsu.imagc.ui.adapters.SettingAdapter
+import kotlinx.android.synthetic.main.settings_fragment.*
+
 
 class SettingsFragment : Fragment() {
 
@@ -14,7 +22,6 @@ class SettingsFragment : Fragment() {
         fun newInstance() = SettingsFragment()
     }
 
-    private lateinit var viewModel: SettingsViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,8 +32,11 @@ class SettingsFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProviders.of(this).get(SettingsViewModel::class.java)
-        // TODO: Use the ViewModel
+
+        var sensors = (activity as MainActivity).sensors.map { item -> item.sensor }
+        var adapter = SettingAdapter(sensors, context!!)
+        settingList.adapter = adapter
+        settingList.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 
 }

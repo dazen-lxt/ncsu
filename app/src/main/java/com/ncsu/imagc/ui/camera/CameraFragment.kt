@@ -2,20 +2,23 @@ package com.ncsu.imagc.ui.camera
 
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.*
-import androidx.camera.core.impl.ImageCaptureConfig
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import com.ncsu.imagc.MainActivity
 import com.ncsu.imagc.R
+import kotlinx.android.synthetic.main.dialog_photo.view.*
 import kotlinx.android.synthetic.main.fragment_camera.*
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.*
 import kotlin.math.abs
 
 class CameraFragment : Fragment() {
@@ -27,6 +30,13 @@ class CameraFragment : Fragment() {
     private lateinit var imageCapture: ImageCapture
     private var totalMovement: Float = 0f
     private var startX: Float = 0f
+    private var titlePhoto = ""
+        set(value) {
+            field = value
+            titleTextView.text = value
+        }
+
+    private var photoDescription = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,10 +50,23 @@ class CameraFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
         startCamera()
         takePhotoButton.setOnClickListener {
+            val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+            val formatted = formatter.format(Date())
+            titlePhoto =  "${formatted}"
             captureImage()
         }
         enableTorchButton.setOnClickListener {
             camera.cameraControl.enableTorch(camera.cameraInfo.torchState.value != TorchState.ON)
+        }
+
+        confirmButton.setOnClickListener {
+            confirmPhoto()
+        }
+        cancelButton.setOnClickListener {
+            discardPhoto()
+        }
+        editButton.setOnClickListener {
+            editPhoto()
         }
 
         imageCardView.setOnTouchListener { view, motionEvent ->
@@ -60,14 +83,10 @@ class CameraFragment : Fragment() {
             }
             if (motionEvent.action == MotionEvent.ACTION_UP) {
                 if(abs(totalMovement) > 300) {
-                    view.animate().alpha(0f).withEndAction {
-                        cardViewContainer.visibility = View.GONE
-                        view.translationX = 0f
-                        view.translationY = 0f
-                        view.rotation = 0f
-                        view.alpha = 1f
-                    }
-                    (activity as? MainActivity)?.uploadImage(savedUri!!)
+                    if(totalMovement > 0)
+                        confirmPhoto()
+                    else
+                        discardPhoto()
                 }
                 else
                     view.animate().translationX(0f).translationY(0f).rotation(0f)
@@ -149,6 +168,35 @@ class CameraFragment : Fragment() {
             }
 
         }, ContextCompat.getMainExecutor(context!!))
+    }
+
+    fun discardPhoto() {
+        imageCardView.animate().alpha(0f).withEndAction {
+            cardViewContainer.visibility = View.GONE
+            imageCardView.translationX = 0f
+            imageCardView.translationY = 0f
+            imageCardView.rotation = 0f
+            imageCardView.alpha = 1f
+        }
+    }
+
+    fun confirmPhoto() {
+        discardPhoto()
+        (activity as? MainActivity)?.addImage(savedUri!!, titlePhoto, photoDescription)
+    }
+
+    fun editPhoto() {
+        val view = this.layoutInflater.inflate(R.layout.dialog_photo, null)
+        view.photoDescription.setText(photoDescription)
+        view.sensorInfoTextView.text = (activity as MainActivity).getSensorInfo(false)
+        val builder = AlertDialog.Builder(context!!)
+        builder.setView(view)
+        builder.setPositiveButton("Ok") { dialog, _ ->
+            this.photoDescription = view.photoDescription.text.toString()
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.create()
+        builder.show()
     }
 }
 
