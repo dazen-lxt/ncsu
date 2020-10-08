@@ -18,7 +18,6 @@
         tools:text="Ejemplo de texto" />
 
     <Switch
-        android:visibility="gone"
         android:id="@+id/settingSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

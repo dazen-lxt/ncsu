@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -11,6 +12,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -18,6 +20,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -48,8 +51,10 @@ import com.ncsu.imagc.data.AppDatabase
 import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
 import com.ncsu.imagc.data.entities.SensorValue
+import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.email
 import org.jetbrains.anko.uiThread
 import java.lang.Math.round
 import java.util.*
@@ -59,8 +64,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
 
     lateinit var db: AppDatabase
     private lateinit var sensorManager: SensorManager
-    lateinit var sensors: MutableList<SensorValues>
-    var sensorTypes = listOf(Sensor.TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, Sensor.TYPE_GYROSCOPE, Sensor.TYPE_LIGHT)
+    lateinit var sensorValues: MutableList<SensorValues>
+    var sensorTypes: MutableList<Int> = mutableListOf()
     lateinit var googleDriveService: Drive
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -69,6 +74,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     var account: GoogleSignInAccount? = null
     var folderId: String = ""
     var isUploading = false
+    var email: String = ""
+
+    //Conditions
+    var weather: PhotoConditionsDialog.WeatherType = PhotoConditionsDialog.WeatherType.SUNNY
+    var weedType: String = ""
     companion object {
         const val RC_SIGN_IN = 123
         const val MY_PERMISSIONS_REQUEST_LOCATION = 99
@@ -83,10 +93,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navController = findNavController(R.id.nav_host_fragment)
         appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.nav_home, R.id.nav_settings, R.id.nav_historic), drawerLayout)
+                R.id.nav_home, R.id.nav_settings, R.id.nav_historic, R.id.nav_map), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        listSensors()
+        setupSettings()
         setupGoogleAuth()
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -94,9 +104,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         )
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), MY_PERMISSIONS_REQUEST_LOCATION)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.CAMERA), MY_PERMISSIONS_REQUEST_LOCATION)
         else
             setupLocationUpdates()
         startDatabase()
@@ -120,6 +133,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         val isLogged = account != null
         navigationMenu.findItem(R.id.nav_logout).isVisible = isLogged
         navigationMenu.findItem(R.id.nav_historic).isVisible = isLogged
+        navigationMenu.findItem(R.id.nav_map).isVisible = isLogged
         navigationMenu.findItem(R.id.nav_login).isVisible = !isLogged
         navigationMenu.findItem(R.id.nav_logout).setOnMenuItemClickListener(this)
         navigationMenu.performIdentifierAction(R.id.nav_home, 0)
@@ -129,6 +143,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             nameTextView.text = it.displayName
             val emailTextView: TextView = headerView.findViewById(R.id.emailTextView)
             emailTextView.text = it.email
+            email = it.email ?: ""
             val imageView: ImageView = headerView.findViewById(R.id.imageView)
             imageView.setImageURI(it.photoUrl)
         }
@@ -170,7 +185,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == MY_PERMISSIONS_REQUEST_LOCATION) {
-            if(grantResults.size > 0 && grantResults.first() == PackageManager.PERMISSION_GRANTED)
+            if(grantResults.isNotEmpty() && grantResults.first() == PackageManager.PERMISSION_GRANTED)
                 setupLocationUpdates()
             else
                 finish()
@@ -216,16 +231,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             .build()
         doAsync {
             try {
-                var folders = googleDriveService.files().list().apply {
-                    q = "name='ImAgC' and mimeType='application/vnd.google-apps.folder'"
+                val folders = googleDriveService.files().list().apply {
+                    q = "name='WeedAI' and mimeType='application/vnd.google-apps.folder'"
                     spaces = "drive"
                 }.execute()
                 if (folders.files.size == 0) {
                     val fileMetadata = File()
-                    fileMetadata.setName("ImAgC")
-                    fileMetadata.setMimeType("application/vnd.google-apps.folder")
+                    fileMetadata.name = "WeedAI"
+                    fileMetadata.mimeType = "application/vnd.google-apps.folder"
 
-                        var folder = googleDriveService.files().create(fileMetadata).apply {
+                        val folder = googleDriveService.files().create(fileMetadata).apply {
                             fields = "id"
                         }.execute()
                         folderId = folder.id
@@ -237,26 +252,27 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     uploadImages()
                 }
             } catch (e: UserRecoverableAuthIOException) {
-                startActivityForResult(e.intent, 20002);
+                startActivityForResult(e.intent, 20002)
             } catch (e: Exception) {
                 Log.v("LXT", "KLXR")
             }
         }
     }
 
-    fun addImage(imageUri: Uri, title: String, description: String) {
+    fun addImage(imageUri: Uri, title: String, description: String, weedsAmount: String) {
         doAsync {
             try {
-                var photoId = db.photoDao().insertPhoto(PhotoInfo(imageUri.path ?: "", title, description))
-                for(sensor in sensors) {
-                    var sensorId = db.photoDao().insertSensor(SensorInfo(sensor.type, sensor.unit, photoId))
-                    var sensorValues = sensor.values.map { item -> SensorValue(item.toDouble(), sensorId) }
-                    db.photoDao().insertValues(sensorValues)
-                }
+                val photoInfo = PhotoInfo(imageUri.path ?: "", title, description, weedsAmount, weather.name, weedType)
+
                 location?.let {
-                    var locationId = db.photoDao().insertSensor(SensorInfo("Location", "Lat/Lng", photoId))
-                    var locationValues = listOf(it.latitude, it.longitude).map { item -> SensorValue(item.toDouble(), locationId) }
-                    db.photoDao().insertValues(locationValues)
+                    photoInfo.latitude = it.latitude
+                    photoInfo.longitude = it.longitude
+                }
+                val photoId = db.photoDao().insertPhoto(photoInfo)
+                for(sensor in sensorValues.filter { it.actived }) {
+                    val sensorId = db.photoDao().insertSensor(SensorInfo(sensor.type, sensor.unit, photoId))
+                    val sensorValues = sensor.values.map { item -> SensorValue(item.toDouble(), sensorId) }
+                    db.photoDao().insertValues(sensorValues)
                 }
                 uiThread {
                     uploadImages()
@@ -267,29 +283,33 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         }
     }
 
-    fun uploadImages() {
+    private fun uploadImages() {
         if(isUploading)
             return
         isUploading = true
         doAsync {
             try {
-                var photosToSync = db.photoDao().getPhotos().filter { it.synced == false }
+                val photosToSync = db.photoDao().getPhotos().filter { it.synced == false }
                 for (photo in photosToSync) {
                     val fileMetadata =
                         File()
                     fileMetadata.name = "${photo.name}.jpg"
-                    fileMetadata.setParents(Collections.singletonList(folderId))
-                    var file = java.io.File(photo.photoUrl)
+                    fileMetadata.parents = Collections.singletonList(folderId)
+                    val file = java.io.File(photo.photoUrl)
                     val mediaContent = FileContent("image/jpeg", file)
 
                     val fileTextMetadata = File()
                     fileTextMetadata.name = "${photo.name}.json"
-                    fileTextMetadata.setParents(Collections.singletonList(folderId))
-                    var fileSensors = java.io.File(cacheDir, "${photo.name}.info")
+                    fileTextMetadata.parents = Collections.singletonList(folderId)
+                    val fileSensors = java.io.File(cacheDir, "${photo.name}.info")
                     var sensorInfo = "{'name': '${photo.name}'," +
                             "'description': '${photo.description}'," +
+                            "'weather': '${photo.weather}'," +
+                            "'weedType': '${photo.typeWeed}'," +
+                            "'weedsAmount': '${photo.weedsAmount}'," +
+                            "'email': '${email}'," +
                             "'sensors':["
-                    var sensorData = db.photoDao().getSensors(photo.id)
+                    val sensorData = db.photoDao().getSensors(photo.id)
                     for (sensor in sensorData) {
                         sensorInfo += "{'name':'${sensor.sensorName}','unit': '${sensor.units}', 'values': ${db.photoDao().getSensorValues(sensor.id).map{ it.value } }},"
                     }
@@ -316,16 +336,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         }
     }
 
-    fun listSensors() {
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        sensors = mutableListOf()
-        for(sensorType in sensorTypes) {
-            sensorManager.getDefaultSensor(sensorType)?.let {
-                sensors.add(SensorValues(it))
-            }
-        }
-    }
-
     override fun onMenuItemClick(p0: MenuItem): Boolean {
         when(p0.itemId) {
             R.id.nav_logout -> googleSignOut()
@@ -337,12 +347,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        sensors.find { item -> item.sensor == event.sensor }?.values = event.values.toList()
+        sensorValues.find { it.sensor == event.sensor }?.values = event.values.toList()
     }
 
     override fun onResume() {
         super.onResume()
-        sensors.forEach {
+        registerListeners()
+    }
+
+
+    private fun registerListeners() {
+        sensorValues.filter { it.actived }.forEach {
             sensorManager.registerListener(this, it.sensor, SensorManager.SENSOR_DELAY_NORMAL)
         }
     }
@@ -353,7 +368,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     }
 
     fun getSensorInfo(showName: Boolean): String {
-        return sensors.joinToString(separator = "\n", transform = {
+        return sensorValues.filter { it.actived }.joinToString(separator = "\n", transform = {
             it.getInfo(showName)
         })
     }
@@ -361,9 +376,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     @SuppressLint("MissingPermission")
     fun setupLocationUpdates() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        var locationRequest = LocationRequest()
+        val locationRequest = LocationRequest()
         locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
-        var locationCallback = object: LocationCallback() {
+        val locationCallback = object: LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 location = locationResult.lastLocation
@@ -372,19 +387,60 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
 
-    fun startDatabase() {
+    private fun startDatabase() {
         db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "database-name"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
-    class SensorValues(val sensor: Sensor) {
+    private fun setupSettings() {
+        sensorTypes = mutableListOf()
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val preferences: SharedPreferences =
+            getSharedPreferences("NCSUPreferences", Context.MODE_PRIVATE)
+        val editor: SharedPreferences.Editor = preferences.edit()
+        val mandatorySensors = listOf(Sensor.TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, Sensor.TYPE_AMBIENT_TEMPERATURE, Sensor.TYPE_LIGHT, Sensor.TYPE_PRESSURE, Sensor.TYPE_PROXIMITY)
+        val optionalSensors = listOf(Sensor.TYPE_GYROSCOPE)
+        for(sensor in mandatorySensors) {
+            if(preferences.contains(sensor.toString())) {
+                sensorTypes.add(sensor)
+            } else {
+                if(sensorManager.getDefaultSensor(sensor) != null) {
+                    editor.putBoolean(sensor.toString(), true)
+                    sensorTypes.add(sensor)
+                }
+            }
+        }
+        for(sensor in optionalSensors) {
+            if(preferences.contains(sensor.toString())) {
+                sensorTypes.add(sensor)
+            } else {
+                if(sensorManager.getDefaultSensor(sensor) != null) {
+                    editor.putBoolean(sensor.toString(), false)
+                    sensorTypes.add(sensor)
+                }
+            }
+        }
+        editor.apply()
+
+        sensorValues = mutableListOf()
+        for(sensorType in sensorTypes) {
+            sensorManager.getDefaultSensor(sensorType)?.let {
+                sensorValues.add(SensorValues(it, preferences.getBoolean(it.type.toString(), false)))
+            }
+        }
+    }
+
+    class SensorValues(val sensor: Sensor, val actived: Boolean) {
         var values: List<Float> = listOf()
         var unit = when(sensor.type) {
             Sensor.TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER_UNCALIBRATED -> "m/s2"
             Sensor.TYPE_GYROSCOPE -> "rad/s"
             Sensor.TYPE_LIGHT -> "lux"
+            Sensor.TYPE_AMBIENT_TEMPERATURE -> "°C"
+            Sensor.TYPE_PRESSURE -> "hPa"
+            Sensor.TYPE_PROXIMITY -> "cm"
             else -> ""
         }
         var type = when(sensor.type) {
@@ -392,6 +448,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             Sensor.TYPE_ACCELEROMETER_UNCALIBRATED -> "Accelerometer Uncalibrated"
             Sensor.TYPE_GYROSCOPE -> "Gyroscope"
             Sensor.TYPE_LIGHT -> "Light"
+            Sensor.TYPE_AMBIENT_TEMPERATURE -> "Temperature"
+            Sensor.TYPE_PRESSURE -> "Pressure"
+            Sensor.TYPE_PROXIMITY -> "Proximity"
             else -> ""
         }
         fun getInfo(showName: Boolean): String {

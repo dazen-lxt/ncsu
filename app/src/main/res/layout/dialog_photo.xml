@@ -1,37 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
+    android:background="#70879D"
     android:layout_gravity="center"
-    android:padding="10dp"
+    android:padding="20dp"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
+
     <TextView
-        android:layout_gravity="center"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:layout_marginTop="10dp"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
         android:text="@string/photo_description"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"></TextView>
+        android:layout_height="wrap_content" />
     <EditText
+        android:textColor="#FFFFFF"
+        android:textColorHint="#FFFFFF"
+        android:background="@drawable/edittext_background"
         android:id="@+id/photoDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp" />
-    <TextView
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:text="@string/device_sensors_information"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"></TextView>
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp" />
 
     <TextView
-        android:id="@+id/sensorInfoTextView"
-        android:layout_margin="10dp"
-        android:textSize="20sp"
-        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n\nmagna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit\n\natur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:textColor="#FFFFFF"
+        android:text="@string/how_many_weeds"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"></TextView>
+        android:layout_height="wrap_content" />
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <RadioButton
+            android:buttonTint="#FFFFFF"
+            android:textColor="#FFFFFF"
+            android:id="@+id/radioButton1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="1" />
+        <RadioButton
+            android:buttonTint="#FFFFFF"
+            android:textColor="#FFFFFF"
+            android:id="@+id/radioButton25"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="2-5" />
+        <RadioButton
+            android:buttonTint="#FFFFFF"
+            android:textColor="#FFFFFF"
+            android:id="@+id/radioButton5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text=">5" />
+    </RadioGroup>
+    <TextView
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="10dp"
+        android:textSize="16sp"
+        android:text="@string/device_sensors_information"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="5dp"
+        android:id="@+id/sensorInfoTextView"
+        android:textSize="14sp"
+        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n\nmagna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit\n\natur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

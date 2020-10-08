@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import com.ncsu.imagc.data.dao.PhotoDao
 import com.ncsu.imagc.data.entities.*
 
-@Database(entities = arrayOf(PhotoInfo::class, SensorInfo::class, SensorValue::class), version = 1)
+@Database(entities = [PhotoInfo::class, SensorInfo::class, SensorValue::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun photoDao(): PhotoDao
 }

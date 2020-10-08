@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:background="#70879D"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:tint="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/close" />
+
+    <TextView
+        android:textAlignment="center"
+        android:id="@+id/titleTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="40dp"
+        android:text="@string/conditions_title"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_marginStart="20dp"
+        android:id="@+id/sunnyImageView"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/ic_sun"
+        app:layout_constraintStart_toStartOf="@+id/titleTextView"
+        app:layout_constraintTop_toBottomOf="@+id/titleTextView"
+        android:contentDescription="@string/sunny" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sunny"
+        android:id="@+id/sunnyTextView"
+        android:layout_marginStart="20dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/sunnyImageView"
+        app:layout_constraintStart_toEndOf="@+id/sunnyImageView"
+        app:layout_constraintTop_toTopOf="@+id/sunnyImageView" />
+
+    <RadioButton
+        android:layout_marginEnd="20dp"
+        android:id="@+id/sunnyRadioButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@+id/sunnyImageView"
+        app:layout_constraintEnd_toEndOf="@+id/titleTextView"
+        app:layout_constraintTop_toTopOf="@+id/sunnyImageView" />
+
+
+
+    <ImageView
+        android:id="@+id/partialCloudImageView"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/ic_clouds_and_sun"
+        app:layout_constraintStart_toStartOf="@+id/sunnyImageView"
+        app:layout_constraintTop_toBottomOf="@+id/sunnyImageView"
+        android:contentDescription="@string/partial_cloudy" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/partial_cloudy"
+        android:id="@+id/partialCloudTextView"
+        android:layout_marginStart="20dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/partialCloudImageView"
+        app:layout_constraintStart_toEndOf="@+id/partialCloudImageView"
+        app:layout_constraintTop_toTopOf="@+id/partialCloudImageView" />
+
+    <RadioButton
+        android:id="@+id/partialCloudRadioButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@+id/partialCloudImageView"
+        app:layout_constraintEnd_toEndOf="@+id/sunnyRadioButton"
+        app:layout_constraintTop_toTopOf="@+id/partialCloudImageView" />
+
+
+    <ImageView
+        android:id="@+id/cloudyImageView"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/ic_cloud"
+        app:layout_constraintStart_toStartOf="@+id/sunnyImageView"
+        app:layout_constraintTop_toBottomOf="@+id/partialCloudImageView"
+        android:contentDescription="@string/cloudy" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cloudy"
+        android:id="@+id/cloudyTextView"
+        android:layout_marginStart="20dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/cloudyImageView"
+        app:layout_constraintStart_toEndOf="@+id/cloudyImageView"
+        app:layout_constraintTop_toTopOf="@+id/cloudyImageView" />
+
+    <AutoCompleteTextView
+        android:maxLength="15"
+        android:textColorHint="#DDDDDD"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:singleLine="true"
+        android:completionThreshold="1"
+        android:imeOptions="actionDone"
+        android:id="@+id/typeWeedTextView"
+        android:hint="@string/type_weed_specie"
+        android:background="@drawable/edittext_background"
+        android:layout_marginTop="40dp"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        app:layout_constraintEnd_toEndOf="@+id/titleTextView"
+        app:layout_constraintStart_toStartOf="@+id/titleTextView"
+        app:layout_constraintTop_toBottomOf="@+id/cloudyTextView" />
+
+    <RadioButton
+        android:id="@+id/cloudyRadioButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@+id/cloudyImageView"
+        app:layout_constraintEnd_toEndOf="@+id/sunnyRadioButton"
+        app:layout_constraintTop_toTopOf="@+id/cloudyImageView" />
+    <Button
+        android:id="@+id/continueButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="44dp"
+        android:background="@drawable/button_background"
+        android:text="@string/to_continue"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

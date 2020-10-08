@@ -6,6 +6,51 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.camera.CameraFragment">
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/weatherCardView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        app:cardBackgroundColor="#70879D"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/weatherImageView"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_sun" />
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/typeCardView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#70879D"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/weatherCardView"
+        app:layout_constraintEnd_toStartOf="@+id/weatherCardView"
+        app:layout_constraintTop_toTopOf="@+id/weatherCardView">
+
+        <TextView
+            android:id="@+id/typeWeedTextView"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cloudy"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
@@ -34,6 +79,28 @@
         app:layout_constraintBottom_toBottomOf="@+id/takePhotoButton"
         app:layout_constraintStart_toEndOf="@+id/takePhotoButton"
         app:layout_constraintTop_toTopOf="@+id/takePhotoButton" />
+
+    <ImageButton
+        android:id="@+id/zoomInButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/confirm_action_button"
+        android:src="@drawable/ic_baseline_zoom_in_24"
+        android:tint="@android:color/white"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/zoomOutButton"
+        app:layout_constraintStart_toStartOf="@+id/zoomOutButton" />
+    <ImageButton
+        android:id="@+id/zoomOutButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/cancel_action_button"
+        android:src="@drawable/ic_baseline_zoom_out_24"
+        android:tint="@android:color/white"
+        android:layout_marginLeft="30dp"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
     <RelativeLayout
         android:visibility="gone"
         android:id="@+id/cardViewContainer"

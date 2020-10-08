@@ -5,6 +5,16 @@
     android:layout_height="100dp"
     xmlns:tools="http://schemas.android.com/tools">
 
+
+    <ImageView
+        android:id="@+id/historicImage"
+        android:layout_width="80dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/syncImageView"
+        app:layout_constraintStart_toStartOf="@+id/syncImageView"
+        app:layout_constraintTop_toTopOf="parent"></ImageView>
+
     <ImageView
         android:id="@+id/syncImageView"
         android:layout_width="40dp"
@@ -12,15 +22,6 @@
         android:src="@drawable/ic_baseline_check_24"
         android:tint="@color/success"
         android:layout_marginLeft="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></ImageView>
-    <ImageView
-        android:id="@+id/historicImage"
-        android:layout_width="80dp"
-        android:layout_height="0dp"
-        android:layout_marginLeft="80dp"
-        android:layout_marginRight="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"></ImageView>
@@ -33,13 +34,13 @@
         android:textColor="@android:color/white"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/detailsButton"
+        app:layout_constraintEnd_toStartOf="@+id/detailButton"
         app:layout_constraintStart_toEndOf="@+id/syncImageView"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Archivo XXXXX"></TextView>
 
     <ImageButton
-        android:id="@+id/detailsButton"
+        android:id="@+id/detailButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_margin="20dp"

@@ -14,13 +14,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.ncsu.imagc.MainActivity
 import com.ncsu.imagc.R
+import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.home_fragment.*
 import kotlinx.android.synthetic.main.home_fragment.view.*
 import kotlinx.android.synthetic.main.home_fragment.view.startButton
 
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogListener {
 
 
     override fun onCreateView(
@@ -34,18 +36,13 @@ class HomeFragment : Fragment() {
                 if(it.account == null)
                     it.goToLogin()
                 else {
-                    root.findNavController().apply {
-                        if(currentDestination?.id == R.id.nav_home) {
-                            navigate(R.id.nav_camera)
-                        }
-                    }
+                    val dialog = PhotoConditionsDialog(requireContext(), it.weather, it.weedType, this)
+                    dialog.show()
                 }
             }
 
         }
-        if (allPermissionsGranted()) {
-            root.startButton.isEnabled = true
-        } else {
+        if (!allPermissionsGranted()) {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
         return root
@@ -75,6 +72,16 @@ class HomeFragment : Fragment() {
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             activity!!.baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun onContinueButton(weather: PhotoConditionsDialog.WeatherType, weedType: String) {
+        (activity as MainActivity).weather = weather
+        (activity as MainActivity).weedType = weedType
+        findNavController().apply {
+            if(currentDestination?.id == R.id.nav_home) {
+                navigate(R.id.nav_camera)
+            }
+        }
     }
 
 }

@@ -29,7 +29,7 @@ class HistoricFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        adapter = HistoricAdapter(listOf(), context!!)
+        adapter = HistoricAdapter(listOf(), context!!, (activity as MainActivity).db)
         historicList.adapter = adapter
         historicList.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         listFiles()
@@ -40,6 +40,14 @@ class HistoricFragment : Fragment() {
             doAsync {
                 var db = (activity as MainActivity).db
                 var photos = db.photoDao().getPhotos()
+                if ((activity as MainActivity).account != null) {
+                    var folderId = (activity as MainActivity).folderId
+                    var googleDriveService = (activity as MainActivity).googleDriveService
+                    var files = googleDriveService.files().list().apply {
+                        q = "'${folderId}' in parents and mimeType contains 'image/'"
+                        spaces = "drive"
+                    }.execute()
+                }
                 uiThread {
                     adapter.items = photos
                     adapter.notifyDataSetChanged()

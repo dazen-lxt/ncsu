@@ -1,13 +1,11 @@
 package com.ncsu.imagc.data.dao
 
 import android.hardware.Sensor
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
 import com.ncsu.imagc.data.entities.SensorValue
+import com.ncsu.imagc.data.entities.SensorWithValues
 
 @Dao
 interface PhotoDao {
@@ -20,6 +18,10 @@ interface PhotoDao {
 
     @Query("SELECT * FROM sensorvalue WHERE sensorId = :sensorId")
     fun getSensorValues(sensorId: Long): List<SensorValue>
+
+    @Transaction
+    @Query("SELECT * FROM sensorinfo WHERE photoId = :photoId")
+    fun getSensorWithValues(photoId: Long): List<SensorWithValues>
 
     @Insert
     fun insertPhoto(photo: PhotoInfo): Long
