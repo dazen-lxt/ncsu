@@ -107,12 +107,12 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
     }
 
     private fun captureImage() {
-        val photoFile = File.createTempFile("IMG_", null, context!!.cacheDir)
+        val photoFile = File.createTempFile("IMG_", null, requireContext().cacheDir)
         if(!photoFile.exists()) {
             try {
                 photoFile.createNewFile()
             } catch (e: IOException) {
-                Snackbar.make(view!!, "Failed to create the file", Snackbar.LENGTH_LONG)
+                Snackbar.make(requireView(), "Failed to create the file", Snackbar.LENGTH_LONG)
             }
         }
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()

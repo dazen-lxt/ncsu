@@ -12,7 +12,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -20,7 +19,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -47,6 +45,10 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
+import com.microsoft.azure.storage.StorageCredentialsSharedAccessSignature
+import com.microsoft.azure.storage.StorageUri
+import com.microsoft.azure.storage.blob.CloudBlobClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.ncsu.imagc.data.AppDatabase
 import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
@@ -54,14 +56,18 @@ import com.ncsu.imagc.data.entities.SensorValue
 import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.email
 import org.jetbrains.anko.uiThread
 import java.lang.Math.round
+import java.net.URI
+import java.net.URL
 import java.util.*
-
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuItemClickListener, SensorEventListener {
 
+    private val sasToken = "?sv=2019-12-12&ss=btqf&srt=sco&st=2020-10-09T15%3A05%3A52Z&se=2020-12-31T15%3A05%3A00Z&sp=rwdxlacup&sig=BZtGRAP3ZqZiFi7vq6e7wZ6unMMC%2BLNOweKPtVGSRvQ%3D"
+    private val uriStorage = StorageUri(URI("https://weedsmedia.blob.core.usgovcloudapi.net/"))
+
+    private var azureContainer: CloudBlobContainer? = null
     lateinit var db: AppDatabase
     private lateinit var sensorManager: SensorManager
     lateinit var sensorValues: MutableList<SensorValues>
@@ -75,6 +81,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     var folderId: String = ""
     var isUploading = false
     var email: String = ""
+    var useAzureStorage = true
 
     //Conditions
     var weather: PhotoConditionsDialog.WeatherType = PhotoConditionsDialog.WeatherType.SUNNY
@@ -125,7 +132,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
         account = GoogleSignIn.getLastSignedInAccount(this)
         setupMenu()
-        setupDrive()
+        if(useAzureStorage) setupAzure() else setupDrive()
     }
 
     private fun setupMenu() {
@@ -278,7 +285,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     uploadImages()
                 }
             } catch (e: Exception) {
-                Log.v("LXT", "KLXR")
+                Log.v("LXT", e.message ?: "")
             }
         }
     }
@@ -287,9 +294,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         if(isUploading)
             return
         isUploading = true
+        if(useAzureStorage) uploadImagesByAzure() else uploadImagesByDrive()
+    }
+
+    private fun uploadImagesByDrive() {
         doAsync {
             try {
-                val photosToSync = db.photoDao().getPhotos().filter { it.synced == false }
+                val photosToSync = db.photoDao().getPhotos().filter { !it.synced }
                 for (photo in photosToSync) {
                     val fileMetadata =
                         File()
@@ -319,8 +330,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     val mediaContentText = FileContent("text/plain", fileSensors)
 
                     photo.fileId = googleDriveService.files().create(fileMetadata, mediaContent).apply {
-                            fields = "id"
-                        }.execute().id
+                        fields = "id"
+                    }.execute().id
                     photo.fileInfoId = googleDriveService.files().create(fileTextMetadata, mediaContentText).apply {
                         fields = "id"
                     }.execute().id
@@ -332,7 +343,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             } catch (e: Exception) {
                 Log.v("LXT", "KLXR")
             }
-            
+
         }
     }
 
@@ -463,5 +474,61 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             return info
         }
 
+    }
+    fun setupAzure() {
+        doAsync {
+            try {
+                val accountSAS = StorageCredentialsSharedAccessSignature(sasToken)
+                val blobClient = CloudBlobClient(uriStorage, accountSAS)
+                azureContainer = blobClient.getContainerReference("images")
+                //var blob = azureContainer.getBlockBlobReference("Test")
+                //var file = java.io.File(cacheDir, "File")
+                //file.writeText("Prueba")
+                //blob?.uploadFromFile(file.path)
+                uiThread {
+                    uploadImages()
+                }
+            } catch (e: Throwable) {
+                Log.v("LXT", e.message ?: "")
+            }
+        }
+    }
+    private fun uploadImagesByAzure() {
+        doAsync {
+            try {
+                val photosToSync = db.photoDao().getPhotos().filter { it.synced == false }
+                for (photo in photosToSync) {
+
+                    val file = java.io.File(photo.photoUrl)
+
+                    val fileSensors = java.io.File(cacheDir, "${photo.name}.info")
+                    var sensorInfo = "{'name': '${photo.name}'," +
+                            "'description': '${photo.description}'," +
+                            "'weather': '${photo.weather}'," +
+                            "'weedType': '${photo.typeWeed}'," +
+                            "'weedsAmount': '${photo.weedsAmount}'," +
+                            "'email': '${email}'," +
+                            "'sensors':["
+                    val sensorData = db.photoDao().getSensors(photo.id)
+                    for (sensor in sensorData) {
+                        sensorInfo += "{'name':'${sensor.sensorName}','unit': '${sensor.units}', 'values': ${db.photoDao().getSensorValues(sensor.id).map{ it.value } }},"
+                    }
+                    sensorInfo += "]}"
+
+                    fileSensors.writeText(sensorInfo)
+                    val blob = azureContainer?.getBlockBlobReference("${photo.name}.jpg")
+                    blob?.uploadFromFile(file.path)
+                    val blobSensor = azureContainer?.getBlockBlobReference("${photo.name}.json")
+                    blobSensor?.uploadFromFile(fileSensors.path)
+                    photo.synced = true
+                    db.photoDao().updatePhoto(photo)
+                }
+                isUploading = false
+
+            } catch (e: Exception) {
+                Log.v("LXT", "KLXR")
+            }
+
+        }
     }
 }
