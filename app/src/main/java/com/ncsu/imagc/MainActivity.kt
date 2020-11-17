@@ -53,25 +53,28 @@ import com.ncsu.imagc.data.AppDatabase
 import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
 import com.ncsu.imagc.data.entities.SensorValue
+import com.ncsu.imagc.manager.SharedPreferencesManager
 import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.lang.Math.round
 import java.net.URI
-import java.net.URL
 import java.util.*
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuItemClickListener, SensorEventListener {
 
-    private val sasToken = "?sv=2019-12-12&ss=btqf&srt=sco&st=2020-10-09T15%3A05%3A52Z&se=2020-12-31T15%3A05%3A00Z&sp=rwdxlacup&sig=BZtGRAP3ZqZiFi7vq6e7wZ6unMMC%2BLNOweKPtVGSRvQ%3D"
+    private val sasTokens = listOf(
+        "?sv=2019-12-12&ss=btqf&srt=sco&st=2020-10-09T15%3A05%3A52Z&se=2020-12-31T15%3A05%3A00Z&sp=rwdxlacup&sig=BZtGRAP3ZqZiFi7vq6e7wZ6unMMC%2BLNOweKPtVGSRvQ%3D",
+        "?sv=2019-12-12&ss=bfqt&srt=c&sp=rwdlacupx&se=2021-11-05T01:35:14Z&st=2020-11-04T18:35:14Z&spr=https&sig=w219kxPVwS9rbpH7ODKdAQoLADVXXiDQEpCA%2BRFYWx0%3D")
+
     private val uriStorage = StorageUri(URI("https://weedsmedia.blob.core.usgovcloudapi.net/"))
 
-    private var azureContainer: CloudBlobContainer? = null
+    private var azureContainers: List<CloudBlobContainer> = listOf()
     lateinit var db: AppDatabase
     private lateinit var sensorManager: SensorManager
     lateinit var sensorValues: MutableList<SensorValues>
-    var sensorTypes: MutableList<Int> = mutableListOf()
+    private var sensorTypes: MutableList<Int> = mutableListOf()
     lateinit var googleDriveService: Drive
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -79,9 +82,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     private var location: Location? = null
     var account: GoogleSignInAccount? = null
     var folderId: String = ""
-    var isUploading = false
-    var email: String = ""
-    var useAzureStorage = true
+    private var isUploading = false
+    private var email: String = ""
+    private var useAzureStorage = true
 
     //Conditions
     var weather: PhotoConditionsDialog.WeatherType = PhotoConditionsDialog.WeatherType.SUNNY
@@ -132,6 +135,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
         account = GoogleSignIn.getLastSignedInAccount(this)
         setupMenu()
+    }
+
+    private fun setupStorage() {
+        val preferences: SharedPreferences = getSharedPreferences(SharedPreferencesManager.name, Context.MODE_PRIVATE)
+        useAzureStorage = preferences.getBoolean(SharedPreferencesManager.SettingsPreferences.USE_AZURE.namePreference, true)
         if(useAzureStorage) setupAzure() else setupDrive()
     }
 
@@ -207,23 +215,21 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             handleSignInResult(task)
         }
         else {
-            setupDrive()
+            setupStorage()
         }
     }
 
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-        try {
-            account =
-                completedTask.getResult(ApiException::class.java)
-
+        account = try {
+            completedTask.getResult(ApiException::class.java)
         } catch (e: ApiException) {
-            account = null
+            null
         }
         setupMenu()
-        setupDrive()
+        setupStorage()
     }
 
-    fun setupDrive() {
+    private fun setupDrive() {
         if (account == null)
             return
         val credential = GoogleAccountCredential.usingOAuth2(
@@ -409,7 +415,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         sensorTypes = mutableListOf()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val preferences: SharedPreferences =
-            getSharedPreferences("NCSUPreferences", Context.MODE_PRIVATE)
+            getSharedPreferences(SharedPreferencesManager.name, Context.MODE_PRIVATE)
         val editor: SharedPreferences.Editor = preferences.edit()
         val mandatorySensors = listOf(Sensor.TYPE_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, Sensor.TYPE_AMBIENT_TEMPERATURE, Sensor.TYPE_LIGHT, Sensor.TYPE_PRESSURE, Sensor.TYPE_PROXIMITY)
         val optionalSensors = listOf(Sensor.TYPE_GYROSCOPE)
@@ -475,16 +481,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         }
 
     }
-    fun setupAzure() {
+    private fun setupAzure() {
         doAsync {
             try {
-                val accountSAS = StorageCredentialsSharedAccessSignature(sasToken)
-                val blobClient = CloudBlobClient(uriStorage, accountSAS)
-                azureContainer = blobClient.getContainerReference("images")
-                //var blob = azureContainer.getBlockBlobReference("Test")
-                //var file = java.io.File(cacheDir, "File")
-                //file.writeText("Prueba")
-                //blob?.uploadFromFile(file.path)
+                azureContainers = listOf()
+                for (sasToken in sasTokens) {
+                    val accountSAS = StorageCredentialsSharedAccessSignature(sasToken)
+                    val blobClient = CloudBlobClient(uriStorage, accountSAS)
+                    azureContainers.plus(blobClient.getContainerReference("images"))
+                }
                 uiThread {
                     uploadImages()
                 }
@@ -496,7 +501,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     private fun uploadImagesByAzure() {
         doAsync {
             try {
-                val photosToSync = db.photoDao().getPhotos().filter { it.synced == false }
+                val photosToSync = db.photoDao().getPhotos().filter { !it.synced }
                 for (photo in photosToSync) {
 
                     val file = java.io.File(photo.photoUrl)
@@ -507,6 +512,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                             "'weather': '${photo.weather}'," +
                             "'weedType': '${photo.typeWeed}'," +
                             "'weedsAmount': '${photo.weedsAmount}'," +
+                            "'latitude': '${photo.latitude}'," +
+                            "'longitude': '${photo.longitude}'," +
                             "'email': '${email}'," +
                             "'sensors':["
                     val sensorData = db.photoDao().getSensors(photo.id)
@@ -516,10 +523,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     sensorInfo += "]}"
 
                     fileSensors.writeText(sensorInfo)
-                    val blob = azureContainer?.getBlockBlobReference("${photo.name}.jpg")
-                    blob?.uploadFromFile(file.path)
-                    val blobSensor = azureContainer?.getBlockBlobReference("${photo.name}.json")
-                    blobSensor?.uploadFromFile(fileSensors.path)
+                    for (azureContainer in azureContainers) {
+                        val blob = azureContainer.getBlockBlobReference("${photo.name}.jpg")
+                        blob?.uploadFromFile(file.path)
+                        val blobSensor = azureContainer.getBlockBlobReference("${photo.name}.json")
+                        blobSensor?.uploadFromFile(fileSensors.path)
+                    }
                     photo.synced = true
                     db.photoDao().updatePhoto(photo)
                 }

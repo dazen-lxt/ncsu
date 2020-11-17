@@ -29,10 +29,28 @@
     <string name="close">close</string>
     <string name="type_weed_specie">Type weed specie</string>
     <string name="how_many_weeds">Select how many weeds you see in the picture</string>
+    <string name="way_upload_data">Select the way to upload the data</string>
+    <string name="google_drive">Google Drive</string>
+    <string name="azure">Azure</string>
 
     <string-array name="weed_types">
-        <item>Corn</item>
-        <item>Soybean</item>
-        <item>Cotton</item>
+        <item>Nutsedge (yellow)</item>
+        <item>Nutsedge (purple)</item>
+        <item>Pigweed (redroot)</item>
+        <item>Pigweed (tumble)</item>
+        <item>Pigweed (spiny)</item>
+        <item>Palmer amaranth</item>
+        <item>Morningglory (ivyleaf)</item>
+        <item>Morningglory (pitted)</item>
+        <item>Morningglory (tall)</item>
+        <item>Waterhemp (common)</item>
+        <item>Waterhemp (tall)</item>
+        <item>Common lambsquarters</item>
+        <item>Ragweed (common)</item>
+        <item>Ragweed (giant)</item>
+        <item>Sicklepod</item>
+        <item>Barnyardgrass</item>
+        <item>Bermudagrass</item>
+        <item>Crabgrass</item>
     </string-array>
 </resources>

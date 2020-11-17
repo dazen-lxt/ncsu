@@ -5,7 +5,8 @@
     <color name="colorAccent">#EE0000</color>
     <color name="backgroundGreen">#9fAd4c</color>
     <color name="backgroundRed">#FF6466</color>
-    <color name="translucentDark">#99000000</color>
+    <color name="backgroundBlue">#4c9fAd</color>
+    <color name="translucentDark">#49000000</color>
     <color name="notification">#007EAB</color>
     <color name="error">#CB061D</color>
     <color name="success">#008660</color>

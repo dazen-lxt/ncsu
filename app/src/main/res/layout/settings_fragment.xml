@@ -2,38 +2,106 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:background="@color/backgroundRed"
-android:gravity="center"
-android:orientation="vertical"
-tools:context=".ui.settings.SettingsFragment">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroundBlue"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".ui.settings.SettingsFragment">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:width="@dimen/normal_text_width"
-        android:gravity="center"
-        android:text="@string/select_the_sensors_that_you_want_to_use"
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/settingList"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_margin="20dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/saveButton"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView">
+        app:layout_constraintTop_toTopOf="parent">
 
-    </androidx.recyclerview.widget.RecyclerView>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/settingsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:width="@dimen/normal_text_width"
+                android:gravity="center"
+                android:text="@string/way_upload_data"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/googleDriveTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/google_drive"
+                android:textColor="#FFFFFF"
+                app:layout_constraintStart_toEndOf="@+id/googleDriveRadioButton"
+                app:layout_constraintTop_toBottomOf="@+id/settingsTextView" />
+
+            <RadioButton
+                android:id="@+id/googleDriveRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="#FFFFFF"
+                app:layout_constraintBottom_toBottomOf="@+id/googleDriveTextView"
+                app:layout_constraintStart_toStartOf="@+id/settingList"
+                app:layout_constraintTop_toTopOf="@+id/googleDriveTextView" />
+
+            <TextView
+                android:id="@+id/azureTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="@string/azure"
+                android:textColor="#FFFFFF"
+                app:layout_constraintStart_toStartOf="@+id/googleDriveTextView"
+                app:layout_constraintTop_toBottomOf="@+id/googleDriveTextView" />
+
+            <RadioButton
+                android:id="@+id/azureRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="#FFFFFF"
+                app:layout_constraintBottom_toBottomOf="@+id/azureTextView"
+                app:layout_constraintStart_toStartOf="@+id/settingList"
+                app:layout_constraintTop_toTopOf="@+id/azureTextView" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:width="@dimen/normal_text_width"
+                android:gravity="center"
+                android:text="@string/select_the_sensors_that_you_want_to_use"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/azureTextView" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/settingList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/saveButton"
@@ -43,8 +111,7 @@ tools:context=".ui.settings.SettingsFragment">
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:text="@string/save"
-        app:layout_constraintBottom_toBottomOf="@+id/settingList"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.535"
         app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
