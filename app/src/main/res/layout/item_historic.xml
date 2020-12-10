@@ -2,54 +2,121 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
+    android:layout_height="wrap_content"
+    android:background="@color/backgroundGreen"
     xmlns:tools="http://schemas.android.com/tools">
 
-
     <ImageView
-        android:id="@+id/historicImage"
-        android:layout_width="80dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/syncImageView"
-        app:layout_constraintStart_toStartOf="@+id/syncImageView"
-        app:layout_constraintTop_toTopOf="parent"></ImageView>
-
-    <ImageView
-        android:id="@+id/syncImageView"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_baseline_check_24"
-        android:tint="@color/success"
-        android:layout_marginLeft="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/photoImageView"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="30dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></ImageView>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/nameTextView"
+        android:id="@+id/titleTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="20dp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/detailButton"
-        app:layout_constraintStart_toEndOf="@+id/syncImageView"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Archivo XXXXX"></TextView>
+        android:textColor="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/photoImageView"
+        app:layout_constraintTop_toTopOf="@+id/photoImageView"
+        tools:text="Title" />
 
-    <ImageButton
-        android:id="@+id/detailButton"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_margin="20dp"
-        android:background="@drawable/small_button"
-        android:src="@drawable/ic_baseline_remove_red_eye_24"
+    <TextView
+        android:id="@+id/descriptionTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="20dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/weedTypeTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/photoImageView"
+        tools:text="Description" />
+
+    <TextView
+        android:id="@+id/weedTypeTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="20dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/photoImageView"
+        app:layout_constraintTop_toBottomOf="@+id/titleTextView"
+        tools:text="Weed Type" />
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_baseline_location_on_24"
         android:tint="@android:color/white"
+        app:layout_constraintStart_toStartOf="@+id/photoImageView"
+        app:layout_constraintTop_toBottomOf="@+id/descriptionTextView" />
+
+    <TextView
+        android:id="@+id/locationTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView3"
+        app:layout_constraintEnd_toEndOf="@+id/descriptionTextView"
+        app:layout_constraintStart_toEndOf="@+id/imageView3"
+        tools:text="Weed Type" />
+
+
+    <ImageView
+        android:id="@+id/weatherImageView"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="30dp"
+        android:src="@drawable/ic_sun"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/photoImageView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView3" />
+
+    <TextView
+        android:id="@+id/weatherTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/weatherImageView"
+        app:layout_constraintEnd_toEndOf="@+id/descriptionTextView"
+        app:layout_constraintStart_toEndOf="@+id/weatherImageView"
+        tools:text="Weed Type" />
+
+    <TextView
+        android:id="@+id/syncedTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/success"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/weatherImageView"
+        app:layout_constraintEnd_toEndOf="@+id/descriptionTextView"
+        android:text="@string/synced" />
+
+    <View
+        android:layout_width="200dp"
+        android:layout_height="1dp"
+        android:background="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></ImageButton>
-
-
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

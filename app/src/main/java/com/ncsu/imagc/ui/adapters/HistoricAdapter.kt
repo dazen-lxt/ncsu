@@ -1,30 +1,43 @@
 package com.ncsu.imagc.ui.adapters
 
-import android.content.Context
-import android.hardware.Sensor
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.ncsu.imagc.R
-import com.ncsu.imagc.data.AppDatabase
 import com.ncsu.imagc.data.entities.PhotoInfo
-import kotlinx.android.synthetic.main.dialog_photo.view.*
+import com.ncsu.imagc.extensions.toString
+import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.item_historic.view.*
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
+import java.io.File
 
+class HistoricAdapter(var items: List<PhotoInfo>): RecyclerView.Adapter<HistoricAdapter.HistoricViewHolder>() {
 
-class HistoricAdapter(var items: List<PhotoInfo>, var context: Context, var db: AppDatabase): RecyclerView.Adapter<HistoricAdapter.HistoricViewHolder>() {
-    class HistoricViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)
-
-    class HistoricViewModel(var fileName: String)
+    class HistoricViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(photoInfo: PhotoInfo) {
+            itemView.titleTextView.text = photoInfo.name
+            itemView.descriptionTextView.text = photoInfo.description
+            itemView.photoImageView.setImageURI(Uri.fromFile(File(photoInfo.photoUrl)))
+            itemView.weedTypeTextView.text = photoInfo.typeWeed.plus(" (").plus(photoInfo.weedsAmount).plus(")")
+            itemView.locationTextView.text = "Lat: ${photoInfo.latitude.toString(2)} Lng: ${photoInfo.longitude.toString(2)}"
+            itemView.weatherImageView.setImageDrawable(itemView.context.resources.getDrawable(
+                when(photoInfo.weather) {
+                    PhotoConditionsDialog.WeatherType.SUNNY.name -> R.drawable.ic_sun
+                    PhotoConditionsDialog.WeatherType.CLOUDY.name -> R.drawable.ic_cloud
+                    PhotoConditionsDialog.WeatherType.PARTIAL.name -> R.drawable.ic_clouds_and_sun
+                    else -> R.drawable.ic_clouds_and_sun
+                }, null))
+            itemView.weatherTextView.text = photoInfo.weather
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoricViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_historic, parent, false)
-        return HistoricViewHolder(view)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_historic, parent, false)
+        return HistoricViewHolder(
+            view
+        )
     }
 
     override fun getItemCount(): Int {
@@ -32,30 +45,6 @@ class HistoricAdapter(var items: List<PhotoInfo>, var context: Context, var db: 
     }
 
     override fun onBindViewHolder(holder: HistoricViewHolder, position: Int) {
-        var item = items[position]
-
-        holder.itemView.nameTextView.text = "${item.name}"
-        if(!item.synced)
-            holder.itemView.syncImageView.visibility = View.GONE
-        holder.itemView.detailButton.setOnClickListener {
-            doAsync {
-                var sensors = db.photoDao().getSensorWithValues(item.id)
-                var sensorInfo = "Name: ${item.name}\n" +
-                        "Description: ${item.description}\n" +
-                        "Sensors:\n"
-                for(sensor in sensors) {
-                    sensorInfo += "${sensor.sensor.sensorName}: ${sensor.values.map { value -> "${value.value}${sensor.sensor.units}" }}\n"
-                }
-                uiThread {
-                    val builder = AlertDialog.Builder(context!!)
-                    builder.setTitle(item.name)
-                    builder.setMessage(sensorInfo)
-                    builder.setPositiveButton("Close", null)
-                    builder.create()
-                    builder.show()
-                }
-            }
-        }
+        holder.bind(items[position])
     }
-
 }

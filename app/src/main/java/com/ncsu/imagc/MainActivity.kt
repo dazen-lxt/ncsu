@@ -54,6 +54,7 @@ import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
 import com.ncsu.imagc.data.entities.SensorValue
 import com.ncsu.imagc.manager.SharedPreferencesManager
+import com.ncsu.imagc.model.AzureStorageCredential
 import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
@@ -64,11 +65,10 @@ import java.util.*
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuItemClickListener, SensorEventListener {
 
-    private val sasTokens = listOf(
-        "?sv=2019-12-12&ss=btqf&srt=sco&st=2020-10-09T15%3A05%3A52Z&se=2020-12-31T15%3A05%3A00Z&sp=rwdxlacup&sig=BZtGRAP3ZqZiFi7vq6e7wZ6unMMC%2BLNOweKPtVGSRvQ%3D",
-        "?sv=2019-12-12&ss=bfqt&srt=c&sp=rwdlacupx&se=2021-11-05T01:35:14Z&st=2020-11-04T18:35:14Z&spr=https&sig=w219kxPVwS9rbpH7ODKdAQoLADVXXiDQEpCA%2BRFYWx0%3D")
-
-    private val uriStorage = StorageUri(URI("https://weedsmedia.blob.core.usgovcloudapi.net/"))
+    private val credentials = listOf(
+        AzureStorageCredential("?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-04T04:26:50Z&st=2020-12-03T20:26:50Z&spr=https&sig=OSokTwa6AE5O%2FGWEnj9Eptld%2B4KIwKlZom%2BfJfD3J%2F8%3D", StorageUri(URI("https://weedsapp.blob.core.windows.net/"))),
+        AzureStorageCredential("?sv=2019-10-10&ss=bfqt&srt=sco&sp=rwdlacup&se=2021-03-04T08:45:02Z&st=2020-12-04T00:45:02Z&spr=https&sig=O2ud3EFHplFGlU2lPX6AOVVlu8lpYhYImbbs%2Bo6LQ98%3D", StorageUri(URI("https://weedsmedia.blob.core.usgovcloudapi.net/")))
+    )
 
     private var azureContainers: List<CloudBlobContainer> = listOf()
     lateinit var db: AppDatabase
@@ -108,6 +108,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         navView.setupWithNavController(navController)
         setupSettings()
         setupGoogleAuth()
+        if(account != null) setupStorage()
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -288,7 +289,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     db.photoDao().insertValues(sensorValues)
                 }
                 uiThread {
-                    uploadImages()
+                    setupStorage()
                 }
             } catch (e: Exception) {
                 Log.v("LXT", e.message ?: "")
@@ -485,10 +486,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         doAsync {
             try {
                 azureContainers = listOf()
-                for (sasToken in sasTokens) {
-                    val accountSAS = StorageCredentialsSharedAccessSignature(sasToken)
-                    val blobClient = CloudBlobClient(uriStorage, accountSAS)
-                    azureContainers.plus(blobClient.getContainerReference("images"))
+                for (credential in credentials) {
+                    val accountSAS = StorageCredentialsSharedAccessSignature(credential.sasToken)
+                    val blobClient = CloudBlobClient(credential.uri, accountSAS)
+                    azureContainers = azureContainers.plus(blobClient.getContainerReference("images"))
                 }
                 uiThread {
                     uploadImages()
@@ -501,7 +502,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     private fun uploadImagesByAzure() {
         doAsync {
             try {
-                val photosToSync = db.photoDao().getPhotos().filter { !it.synced }
+                val photosToSync = db.photoDao().getPhotos()//.filter { !it.synced }
                 for (photo in photosToSync) {
 
                     val file = java.io.File(photo.photoUrl)

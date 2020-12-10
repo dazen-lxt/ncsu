@@ -30,8 +30,8 @@ class MapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMapCli
         mMap = p0
         try {
             doAsync {
-                var db = (activity as MainActivity).db
-                var photos = db.photoDao().getPhotos()
+                val db = (activity as MainActivity).db
+                val photos = db.photoDao().getPhotos()
 
                 uiThread {
                     for(photo in photos) {
