@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import com.ncsu.imagc.MainActivity
 import com.ncsu.imagc.R
+import com.ncsu.imagc.azure.AzureLog
 import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.dialog_photo.*
 import kotlinx.android.synthetic.main.dialog_photo.view.*
@@ -57,6 +58,9 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
             captureImage()
         }
         enableTorchButton.setOnClickListener {
+            AzureLog.saveLog(AzureLog.LogType.Info("Has torch: ${camera.cameraInfo.hasFlashUnit()}"))
+            AzureLog.saveLog(AzureLog.LogType.Info("Trying enable torch with status: ${camera.cameraInfo.torchState.value}"))
+            AzureLog.saveLog(AzureLog.LogType.Info("On Phone Constant: ${TorchState.ON}"))
             camera.cameraControl.enableTorch(camera.cameraInfo.torchState.value != TorchState.ON)
         }
 
@@ -71,6 +75,7 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
         }
 
         imageCardView.setOnTouchListener { view, motionEvent ->
+            Log.v("LXT", motionEvent.action.toString())
             if (motionEvent.action == MotionEvent.ACTION_DOWN){
                 totalMovement = 0f
                 view.clearAnimation()
@@ -91,8 +96,9 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
                 }
                 else
                     view.animate().translationX(0f).translationY(0f).rotation(0f)
+                view.performClick()
             }
-            view.performClick()
+            true
         }
         typeCardView.setOnClickListener {
             showConditionsDialog()
@@ -111,7 +117,7 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
             try {
                 photoFile.createNewFile()
             } catch (e: IOException) {
-                Snackbar.make(requireView(), "Failed to create the file", Snackbar.LENGTH_LONG)
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
         }
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -147,8 +153,8 @@ class CameraFragment : Fragment(), PhotoConditionsDialog.PhotoConditionsDialogLi
                 camera.cameraControl.setZoomRatio(1f)
                 preview.setSurfaceProvider(previewView.createSurfaceProvider(camera?.cameraInfo))
                 setUpTapToFocus()
-            } catch(exc: Exception) {
-                Log.e("LXT", "Use case binding failed", exc)
+            } catch(e: Exception) {
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
 
         }, ContextCompat.getMainExecutor(context!!))

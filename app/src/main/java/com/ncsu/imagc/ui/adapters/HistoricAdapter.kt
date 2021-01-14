@@ -29,6 +29,8 @@ class HistoricAdapter(var items: List<PhotoInfo>): RecyclerView.Adapter<Historic
                     PhotoConditionsDialog.WeatherType.PARTIAL.name -> R.drawable.ic_clouds_and_sun
                     else -> R.drawable.ic_clouds_and_sun
                 }, null))
+            itemView.syncedTextView.text = itemView.context.getString(R.string.no_synced)
+            if(photoInfo.synced.isNotEmpty()) itemView.syncedTextView.text = photoInfo.synced
             itemView.weatherTextView.text = photoInfo.weather
         }
     }

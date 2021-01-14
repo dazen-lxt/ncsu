@@ -13,12 +13,12 @@ import android.hardware.SensorManager
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -46,30 +46,25 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
 import com.microsoft.azure.storage.StorageCredentialsSharedAccessSignature
-import com.microsoft.azure.storage.StorageUri
 import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.ncsu.imagc.azure.AzureLog
+import com.ncsu.imagc.azure.Connection
 import com.ncsu.imagc.data.AppDatabase
 import com.ncsu.imagc.data.entities.PhotoInfo
 import com.ncsu.imagc.data.entities.SensorInfo
 import com.ncsu.imagc.data.entities.SensorValue
 import com.ncsu.imagc.manager.SharedPreferencesManager
-import com.ncsu.imagc.model.AzureStorageCredential
 import com.ncsu.imagc.ui.dialogs.PhotoConditionsDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.lang.Math.round
-import java.net.URI
 import java.util.*
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuItemClickListener, SensorEventListener {
 
-    private val credentials = listOf(
-        AzureStorageCredential("?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-04T04:26:50Z&st=2020-12-03T20:26:50Z&spr=https&sig=OSokTwa6AE5O%2FGWEnj9Eptld%2B4KIwKlZom%2BfJfD3J%2F8%3D", StorageUri(URI("https://weedsapp.blob.core.windows.net/"))),
-        AzureStorageCredential("?sv=2019-10-10&ss=bfqt&srt=sco&sp=rwdlacup&se=2021-03-04T08:45:02Z&st=2020-12-04T00:45:02Z&spr=https&sig=O2ud3EFHplFGlU2lPX6AOVVlu8lpYhYImbbs%2Bo6LQ98%3D", StorageUri(URI("https://weedsmedia.blob.core.usgovcloudapi.net/")))
-    )
-
+    private val credentials = listOf(Connection.weedsapp, Connection.weedsmedia)
     private var azureContainers: List<CloudBlobContainer> = listOf()
     lateinit var db: AppDatabase
     private lateinit var sensorManager: SensorManager
@@ -160,6 +155,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             val emailTextView: TextView = headerView.findViewById(R.id.emailTextView)
             emailTextView.text = it.email
             email = it.email ?: ""
+            AzureLog.userName = email
+            AzureLog.saveLog(AzureLog.LogType.Login)
             val imageView: ImageView = headerView.findViewById(R.id.imageView)
             imageView.setImageURI(it.photoUrl)
         }
@@ -224,6 +221,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
         account = try {
             completedTask.getResult(ApiException::class.java)
         } catch (e: ApiException) {
+            Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+            AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             null
         }
         setupMenu()
@@ -268,7 +267,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
             } catch (e: UserRecoverableAuthIOException) {
                 startActivityForResult(e.intent, 20002)
             } catch (e: Exception) {
-                Log.v("LXT", "KLXR")
+                Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
         }
     }
@@ -292,7 +292,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     setupStorage()
                 }
             } catch (e: Exception) {
-                Log.v("LXT", e.message ?: "")
+                Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
         }
     }
@@ -307,7 +308,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
     private fun uploadImagesByDrive() {
         doAsync {
             try {
-                val photosToSync = db.photoDao().getPhotos().filter { !it.synced }
+                val photosToSync = db.photoDao().getPhotos().filter { it.synced.isEmpty() }
                 for (photo in photosToSync) {
                     val fileMetadata =
                         File()
@@ -342,13 +343,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     photo.fileInfoId = googleDriveService.files().create(fileTextMetadata, mediaContentText).apply {
                         fields = "id"
                     }.execute().id
-                    photo.synced = true
+                    photo.synced = "Drive"
                     db.photoDao().updatePhoto(photo)
                     isUploading = false
                 }
 
             } catch (e: Exception) {
-                Log.v("LXT", "KLXR")
+                Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
 
         }
@@ -495,7 +497,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                     uploadImages()
                 }
             } catch (e: Throwable) {
-                Log.v("LXT", e.message ?: "")
+                Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
         }
     }
@@ -530,13 +533,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, MenuItem.OnMenuI
                         val blobSensor = azureContainer.getBlockBlobReference("${photo.name}.json")
                         blobSensor?.uploadFromFile(fileSensors.path)
                     }
-                    photo.synced = true
+                    photo.synced = "Azure"
                     db.photoDao().updatePhoto(photo)
                 }
                 isUploading = false
 
             } catch (e: Exception) {
-                Log.v("LXT", "KLXR")
+                Toast.makeText(baseContext, e.message ?: "", Toast.LENGTH_LONG).show()
+                AzureLog.saveLog(AzureLog.LogType.Error(e.message ?: ""))
             }
 
         }

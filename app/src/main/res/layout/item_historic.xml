@@ -110,7 +110,7 @@
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="@+id/weatherImageView"
         app:layout_constraintEnd_toEndOf="@+id/descriptionTextView"
-        android:text="@string/synced" />
+        android:text="@string/no_synced" />
 
     <View
         android:layout_width="200dp"

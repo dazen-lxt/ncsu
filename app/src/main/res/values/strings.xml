@@ -32,7 +32,7 @@
     <string name="way_upload_data">Select the way to upload the data</string>
     <string name="google_drive">Google Drive</string>
     <string name="azure">Azure</string>
-    <string name="synced">Synced</string>
+    <string name="no_synced">No Synch</string>
 
     <string-array name="weed_types">
         <item>Nutsedge (yellow)</item>

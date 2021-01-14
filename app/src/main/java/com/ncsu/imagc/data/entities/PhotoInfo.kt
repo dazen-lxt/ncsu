@@ -14,7 +14,7 @@ data class PhotoInfo(var photoUrl: String,
                      var typeWeed: String) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
-    var synced: Boolean = false
+    var synced: String = ""
     var fileId: String = ""
     var fileInfoId: String = ""
     var latitude: Double = 0.0
